@@ -9,13 +9,13 @@ import re
 from datetime import datetime
 
 SEED_FEEDS = [
-    'https://feeds.bbci.co.uk/news/world/rss.xml',
-    'https://www.cnbc.com/id/100727362/device/rss/rss.html',
-    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
-    'https://www.aljazeera.com/xml/rss/all.xml'
+    ('연합뉴스', 'https://www.yna.co.kr/RSS/headline.xml'),
+    ('YTN',    'https://rss.ytn.co.kr/rss.php?id=0100'),
+    ('KBS',    'https://world.kbs.co.kr/rss/rss_news.htm?lang=k'),
+    ('MBC',    'https://imnews.imbc.com/rss/news/news_00.xml'),
 ]
 
-async def fetch_and_parse_feed(client, url):
+async def fetch_and_parse_feed(client, source_name, url):
     """Helper function to handle a single feed request and parse its XML."""
     try:
         response = await client.get(url, headers={'User-Agent': 'Friday-AI/1.0'}, timeout=5.0)
@@ -23,17 +23,14 @@ async def fetch_and_parse_feed(client, url):
             return []
 
         root = ET.fromstring(response.content)
-        # Extract source name from URL (e.g., 'BBC' or 'NYTIMES')
-        source_name = url.split('.')[1].upper()
-        
+
         feed_items = []
-        # Get top 5 items per feed
         items = root.findall(".//item")[:5]
         for item in items:
             title = item.findtext("title")
             description = item.findtext("description")
             link = item.findtext("link")
-            
+
             if description:
                 description = re.sub('<[^<]+?>', '', description).strip()
 
@@ -45,7 +42,6 @@ async def fetch_and_parse_feed(client, url):
             })
         return feed_items
     except Exception:
-        # If one feed fails, return an empty list so others can still succeed
         return []
 
 def register(mcp):
@@ -53,31 +49,23 @@ def register(mcp):
     @mcp.tool()
     async def get_world_news() -> str:
         """
-        Fetches the latest global headlines from major news outlets simultaneously.
-        Use this when the user asks 'What's going on in the world?' or for recent events.
+        국내외 최신 뉴스 헤드라인을 동시에 가져옵니다.
+        사용자가 '뉴스 알려줘', '요즘 세상 어때', '뭔 일 있어' 등을 물을 때 사용합니다.
         """
-        
+
         async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
-            # 1. Create a list of 'tasks' (one for each URL)
-            tasks = [fetch_and_parse_feed(client, url) for url in SEED_FEEDS]
-            
-            # 2. Fire them all at once and wait for the results
-            # results will be a list of lists: [[news from bbc], [news from nyt], ...]
+            tasks = [fetch_and_parse_feed(client, name, url) for name, url in SEED_FEEDS]
             results_of_lists = await asyncio.gather(*tasks)
-            
-            # 3. Flatten the list of lists into a single list of articles
             all_articles = [item for sublist in results_of_lists for item in sublist]
 
         if not all_articles:
-            return "The global news grid is unresponsive, sir. I'm unable to pull headlines."
+            return "뉴스 피드가 현재 응답하지 않습니다. 잠시 후 다시 시도해 주세요."
 
-        # 4. Format the final briefing
-        report = ["### GLOBAL NEWS BRIEFING (LIVE)\n"]
-        # Limit to top 12 items so the AI doesn't get overwhelmed
+        report = ["### 국내외 뉴스 브리핑 (실시간)\n"]
         for entry in all_articles[:12]:
             report.append(f"**[{entry['source']}]** {entry['title']}")
             report.append(f"{entry['summary']}")
-            report.append(f"Link: {entry['link']}\n")
+            report.append(f"링크: {entry['link']}\n")
 
         return "\n".join(report)
 
@@ -97,15 +85,14 @@ def register(mcp):
     @mcp.tool()
     async def open_world_monitor() -> str:
         """
-        Opens the World Monitor dashboard (worldmonitor.app) in the system's web browser.
-        Use this when the user wants a visual overview of global events or a real-time map.
+        세계 지도 대시보드(worldmonitor.app)를 시스템 브라우저에서 엽니다.
+        뉴스 브리핑 후 또는 사용자가 세계 상황을 시각적으로 보고 싶을 때 사용합니다.
         """
         import webbrowser
         url = "https://worldmonitor.app/"
-        
+
         try:
-            # This opens the URL in the default browser (Chrome/Edge/Safari)
             webbrowser.open(url)
-            return "Displaying the World Monitor on your primary screen now, sir."
+            return "화면에 세계 지도를 띄웠습니다, 보스."
         except Exception as e:
-            return f"I'm unable to initialize the visual monitor: {str(e)}"
+            return f"세계 지도를 여는 데 실패했습니다: {str(e)}"
