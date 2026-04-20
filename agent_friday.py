@@ -23,14 +23,16 @@ from livekit.agents.llm import mcp
 
 # Plugins
 from livekit.plugins import google as lk_google, openai as lk_openai, sarvam, silero
+from friday.local_stt import LocalWhisperSTT
+from friday.local_tts import MeloTTSAdapter
 
 # ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------
 
-STT_PROVIDER       = "whisper"   # Korean: OpenAI Whisper (ko)
+STT_PROVIDER       = "local_whisper"   # 로컬 mlx-whisper (무료, M4 Pro 가속)
 LLM_PROVIDER       = "gemini"
-TTS_PROVIDER       = "openai"
+TTS_PROVIDER       = "local_melo"      # 로컬 MeloTTS KR (무료, MPS 가속)
 
 GEMINI_LLM_MODEL   = "gemini-2.5-flash"
 OPENAI_LLM_MODEL   = "gpt-4o"
@@ -180,7 +182,10 @@ def _mcp_server_url() -> str:
 # ---------------------------------------------------------------------------
 
 def _build_stt():
-    if STT_PROVIDER == "sarvam":
+    if STT_PROVIDER == "local_whisper":
+        logger.info("STT → 로컬 mlx-whisper (openai/whisper-large-v3-turbo)")
+        return LocalWhisperSTT(language="ko")
+    elif STT_PROVIDER == "sarvam":
         logger.info("STT → Sarvam Saaras v3")
         return sarvam.STT(
             language="unknown",
@@ -208,7 +213,10 @@ def _build_llm():
 
 
 def _build_tts():
-    if TTS_PROVIDER == "sarvam":
+    if TTS_PROVIDER == "local_melo":
+        logger.info("TTS → 로컬 MeloTTS KR (MPS)")
+        return MeloTTSAdapter(language="KR", speed=TTS_SPEED, device="mps")
+    elif TTS_PROVIDER == "sarvam":
         logger.info("TTS → Sarvam Bulbul v3")
         return sarvam.TTS(
             target_language_code=SARVAM_TTS_LANGUAGE,
@@ -267,7 +275,7 @@ def _turn_detection() -> str:
 
 
 def _endpointing_delay() -> float:
-    return {"sarvam": 0.07, "whisper": 0.3}.get(STT_PROVIDER, 0.1)
+    return {"sarvam": 0.07, "whisper": 0.3, "local_whisper": 0.5}.get(STT_PROVIDER, 0.3)
 
 
 async def entrypoint(ctx: JobContext) -> None:

@@ -10,6 +10,11 @@ dependencies = [
     "livekit-agents[deepgram,groq,openai,sarvam,silero]>=1.5.1",
     "livekit-plugins-google>=1.5.1",
     "python-dotenv",
+    # 로컬 STT/TTS (오픈소스, 무료)
+    "mlx-whisper",
+    "melo-tts",
+    "soundfile",
+    "scipy",
 ]
 
 [project.scripts]
