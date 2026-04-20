@@ -34,7 +34,7 @@ STT_PROVIDER       = "local_whisper"   # 로컬 mlx-whisper (무료, M4 Pro 가�
 LLM_PROVIDER       = "gemini"
 TTS_PROVIDER       = "macos"           # macOS 내장 Yuna 한국어 음성 (무료, 설치 불필요)
 
-GEMINI_LLM_MODEL   = "gemini-2.5-flash"
+GEMINI_LLM_MODEL   = "gemini-2.0-flash"
 OPENAI_LLM_MODEL   = "gpt-4o"
 
 OPENAI_TTS_MODEL   = "tts-1"
