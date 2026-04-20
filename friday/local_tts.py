@@ -1,8 +1,7 @@
 """
-로컬 TTS 모음
+로컬 TTS — macOS 내장 Yuna 한국어 음성
 
-- MacOSTTS : macOS 내장 Yuna 한국어 음성 (say 명령어, 설치 불필요)
-- MeloTTSAdapter : MeloTTS KR (MeCab 의존성으로 Apple Silicon에서 불안정)
+say 명령어 사용, 설치 불필요, Apple Silicon 완전 호환.
 """
 from __future__ import annotations
 
@@ -97,57 +96,3 @@ class _MacOSChunkedStream(tts.ChunkedStream):
         finally:
             if os.path.exists(tmp):
                 os.unlink(tmp)
-
-
-# ── MeloTTS (참고용 보존, M4 Mac에서 MeCab 의존성 문제로 비활성) ──────────────
-
-class MeloTTSAdapter(tts.TTS):
-    """MeloTTS KR — Apple Silicon에서 MeCab 의존성 문제로 불안정."""
-
-    def __init__(self, *, language: str = "KR", speed: float = 1.0, device: str = "mps") -> None:
-        super().__init__(
-            capabilities=tts.TTSCapabilities(streaming=False),
-            sample_rate=44100,
-            num_channels=1,
-        )
-        self._language = language
-        self._speed = speed
-        self._device = device
-        self._model = None
-        self._speaker_id: int | None = None
-
-    def prewarm(self) -> None:
-        self._load()
-
-    def _load(self) -> None:
-        if self._model is not None:
-            return
-        from melo.api import TTS  # type: ignore[import]
-        self._model = TTS(language=self._language, device=self._device)
-        self._speaker_id = self._model.hps.data.spk2id[self._language]
-
-    def synthesize(self, text: str, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS) -> "_MeloChunkedStream":
-        return _MeloChunkedStream(tts=self, input_text=text, conn_options=conn_options)
-
-
-class _MeloChunkedStream(tts.ChunkedStream):
-    def __init__(self, *, tts: MeloTTSAdapter, input_text: str, conn_options: APIConnectOptions) -> None:
-        super().__init__(tts=tts, input_text=input_text, conn_options=conn_options)
-        self._adapter: MeloTTSAdapter = tts
-
-    async def _run(self, output_emitter: tts.AudioEmitter) -> None:
-        self._adapter._load()
-        output_emitter.initialize(request_id=shortuuid(), sample_rate=44100, num_channels=1, mime_type="audio/pcm", stream=False)
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            tmp_path = f.name
-        try:
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, lambda: self._adapter._model.tts_to_file(self._input_text, self._adapter._speaker_id, tmp_path, speed=self._adapter._speed, quiet=True))
-            data, _ = sf.read(tmp_path, dtype="int16")
-            if data.ndim > 1:
-                data = data[:, 0]
-            output_emitter.push(data.tobytes())
-            output_emitter.flush()
-        finally:
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)

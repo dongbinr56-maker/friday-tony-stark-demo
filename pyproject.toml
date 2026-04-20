@@ -10,9 +10,8 @@ dependencies = [
     "livekit-agents[deepgram,groq,openai,sarvam,silero]>=1.5.1",
     "livekit-plugins-google>=1.5.1",
     "python-dotenv",
-    # 로컬 STT/TTS (오픈소스, 무료)
+    # 로컬 STT (오픈소스, 무료) — TTS는 macOS 내장 say 명령어 사용
     "mlx-whisper",
-    "melotts @ git+https://github.com/myshell-ai/MeloTTS.git",
     "soundfile",
     "scipy",
 ]
