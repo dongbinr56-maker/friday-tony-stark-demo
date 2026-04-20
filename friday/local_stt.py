@@ -31,7 +31,7 @@ class LocalWhisperSTT(stt.STT):
     def __init__(
         self,
         *,
-        model: str = "openai/whisper-large-v3-turbo",
+        model: str = "mlx-community/whisper-large-v3-turbo",
         language: str = "ko",
     ) -> None:
         super().__init__(

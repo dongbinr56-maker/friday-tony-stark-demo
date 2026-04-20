@@ -12,7 +12,7 @@ print("[1/2] Whisper large-v3-turbo 다운로드 중... (~800MB)")
 import mlx_whisper
 import numpy as np
 dummy = np.zeros(16000, dtype=np.float32)
-mlx_whisper.transcribe(dummy, path_or_hf_repo="openai/whisper-large-v3-turbo", language="ko", verbose=False)
+mlx_whisper.transcribe(dummy, path_or_hf_repo="mlx-community/whisper-large-v3-turbo", language="ko", verbose=False)
 print("      Whisper 완료 ✓\n")
 
 # 2. MeloTTS (TTS) — ~200MB
