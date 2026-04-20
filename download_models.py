@@ -7,6 +7,12 @@ uv run python download_models.py
 
 print("=== F.R.I.D.A.Y. 모델 다운로드 시작 ===\n")
 
+# 0. unidic (MeloTTS 일본어 모듈 의존성 — 한국어 사용 시에도 필요)
+print("[0/2] unidic 사전 다운로드 중...")
+import subprocess, sys
+subprocess.run([sys.executable, "-m", "unidic", "download"], check=True)
+print("      unidic 완료 ✓\n")
+
 # 1. Whisper (STT) — ~800MB
 print("[1/2] Whisper large-v3-turbo 다운로드 중... (~800MB)")
 import mlx_whisper
