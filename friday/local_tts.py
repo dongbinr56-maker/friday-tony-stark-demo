@@ -43,6 +43,9 @@ class MeloTTSAdapter(tts.TTS):
         self._model = None
         self._speaker_id: int | None = None
 
+    def prewarm(self) -> None:
+        self._load()
+
     def _load(self) -> None:
         if self._model is not None:
             return

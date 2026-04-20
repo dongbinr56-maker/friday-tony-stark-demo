@@ -45,6 +45,9 @@ class LocalWhisperSTT(stt.STT):
         self._default_language = language
         self._mlx = None
 
+    def prewarm(self) -> None:
+        self._load()
+
     def _load(self) -> None:
         if self._mlx is not None:
             return
