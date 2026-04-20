@@ -24,7 +24,7 @@ from livekit.agents.llm import mcp
 # Plugins
 from livekit.plugins import google as lk_google, openai as lk_openai, sarvam, silero
 from friday.local_stt import LocalWhisperSTT
-from friday.local_tts import MeloTTSAdapter
+from friday.local_tts import MacOSTTS
 
 # ---------------------------------------------------------------------------
 # CONFIG
@@ -32,7 +32,7 @@ from friday.local_tts import MeloTTSAdapter
 
 STT_PROVIDER       = "local_whisper"   # 로컬 mlx-whisper (무료, M4 Pro 가속)
 LLM_PROVIDER       = "gemini"
-TTS_PROVIDER       = "local_melo"      # 로컬 MeloTTS KR (무료, MPS 가속)
+TTS_PROVIDER       = "macos"           # macOS 내장 Yuna 한국어 음성 (무료, 설치 불필요)
 
 GEMINI_LLM_MODEL   = "gemini-2.5-flash"
 OPENAI_LLM_MODEL   = "gpt-4o"
@@ -213,9 +213,9 @@ def _build_llm():
 
 
 def _build_tts():
-    if TTS_PROVIDER == "local_melo":
-        logger.info("TTS → 로컬 MeloTTS KR (MPS)")
-        return MeloTTSAdapter(language="KR", speed=TTS_SPEED, device="mps")
+    if TTS_PROVIDER == "macos":
+        logger.info("TTS → macOS 내장 Yuna (한국어)")
+        return MacOSTTS(voice="Yuna", rate=190)
     elif TTS_PROVIDER == "sarvam":
         logger.info("TTS → Sarvam Bulbul v3")
         return sarvam.TTS(
