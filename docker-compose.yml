@@ -1,7 +1,9 @@
 services:
   livekit:
     image: livekit/livekit-server:latest
-    command: --dev
+    command: --config /etc/livekit/config.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit/config.yaml
     ports:
       - "7880:7880"   # HTTP / WebSocket
       - "7881:7881"   # RTC over TCP

@@ -1,0 +1,3 @@
+port: 7880
+keys:
+  devkey: friday-livekit-dev-secret-key-for-local
